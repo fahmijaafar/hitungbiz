@@ -1,0 +1,109 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <title>{{ subject }}</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style type="text/css">
+    #outlook a {
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      background-color: #fafbfc;
+    }
+
+    table,
+    td {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+
+    img {
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+
+    p {
+      display: block;
+      margin: 13px 0;
+    }
+
+    a {
+      color: #001e84;
+    }
+
+    @media only screen and (min-width: 480px) {
+      .container {
+        width: 600px !important;
+        max-width: 600px;
+      }
+    }
+  </style>
+</head>
+
+<body style="background-color:#fafbfc;">
+  <div style="background-color:#fafbfc;">
+    <!-- Wrapper -->
+    <div class="container" style="background:#ffffff;background-color:#ffffff;margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"
+        style="background:#ffffff;background-color:#ffffff;width:100%;">
+        <tbody>
+          <!-- Header -->
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:30px 20px 10px 20px;text-align:center;vertical-align:top;">
+              <div
+                style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;line-height:1.2;text-align:center;color:#001e84;">
+                {{ project_name }}
+              </div>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 20px;">
+              <div style="border-top:2px solid #001e84;"></div>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:30px 30px;text-align:left;vertical-align:top;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#333333;">
+                {{ body_html }}
+              </div>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 20px;">
+              <div style="border-top:1px solid #e0e0e0;"></div>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:20px;text-align:center;vertical-align:top;">
+              <div
+                style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.4;text-align:center;color:#888888;">
+                You received this email because you are registered with {{ project_name }}.<br>
+                If you have any questions, contact us at
+                <a href="mailto:{{ support_email }}" style="color:#001e84;text-decoration:none;">{{ support_email
+                  }}</a>.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+
+</html>

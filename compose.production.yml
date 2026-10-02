@@ -1,0 +1,294 @@
+services:
+
+  # ============================================================
+  # PostgreSQL
+  # ============================================================
+  db:
+    image: postgres:18
+    restart: always
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+
+    env_file:
+      - .env
+
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_DB: ${POSTGRES_DB?Variable not set}
+
+
+  # ============================================================
+  # Database migrations / initialization
+  # ============================================================
+  prestart:
+    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+
+    command: bash scripts/prestart.sh
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+
+      DOMAIN: ${DOMAIN}
+      FRONTEND_HOST: ${FRONTEND_HOST}
+      ENVIRONMENT: ${ENVIRONMENT}
+
+      PROJECT_NAME: ${PROJECT_NAME}
+      STACK_NAME: ${STACK_NAME}
+      APPLICATION_NAME: ${APPLICATION_NAME}
+
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS}
+
+      SECRET_KEY: ${SECRET_KEY?Variable not set}
+      FIRST_SUPERUSER: ${FIRST_SUPERUSER?Variable not set}
+      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD?Variable not set}
+
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+      SMTP_TLS: ${SMTP_TLS}
+      SMTP_SSL: ${SMTP_SSL}
+      SMTP_PORT: ${SMTP_PORT}
+
+      SENTRY_DSN: ${SENTRY_DSN}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
+
+      CHIP_API_URL: ${CHIP_API_URL}
+      CHIP_SECRET_KEY: ${CHIP_SECRET_KEY}
+      CHIP_BRAND_ID: ${CHIP_BRAND_ID}
+      CHIP_WEBHOOK_URL: ${CHIP_WEBHOOK_URL}
+      CHIP_WEBHOOK_PUBLIC_KEY: ${CHIP_WEBHOOK_PUBLIC_KEY}
+
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+
+      SECURITY_HEADERS_ENABLED: ${SECURITY_HEADERS_ENABLED}
+      SECURE_HSTS_ENABLED: ${SECURE_HSTS_ENABLED}
+      SECURE_HSTS_SECONDS: ${SECURE_HSTS_SECONDS}
+      SECURE_HSTS_INCLUDE_SUBDOMAINS: ${SECURE_HSTS_INCLUDE_SUBDOMAINS}
+      SECURE_HSTS_PRELOAD: ${SECURE_HSTS_PRELOAD}
+
+      MAX_REQUEST_BODY_SIZE: ${MAX_REQUEST_BODY_SIZE}
+      REMOVE_SERVER_HEADER: ${REMOVE_SERVER_HEADER}
+      CSP_HEADER_OVERRIDE: ${CSP_HEADER_OVERRIDE}
+      X_FRAME_OPTIONS: ${X_FRAME_OPTIONS}
+      X_CONTENT_TYPE_OPTIONS: ${X_CONTENT_TYPE_OPTIONS}
+      REFERRER_POLICY: ${REFERRER_POLICY}
+      PERMISSIONS_POLICY: ${PERMISSIONS_POLICY}
+      CROSS_ORIGIN_OPENER_POLICY: ${CROSS_ORIGIN_OPENER_POLICY}
+      CROSS_ORIGIN_RESOURCE_POLICY: ${CROSS_ORIGIN_RESOURCE_POLICY}
+
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED}
+      RATE_LIMIT_TIER1_IP_PER_MIN: ${RATE_LIMIT_TIER1_IP_PER_MIN}
+      RATE_LIMIT_TIER2_USER_PER_MIN: ${RATE_LIMIT_TIER2_USER_PER_MIN}
+      RATE_LIMIT_TIER3_UPLOAD_PER_HR: ${RATE_LIMIT_TIER3_UPLOAD_PER_HR}
+      RATE_LIMIT_TIER4_AI_PER_HR: ${RATE_LIMIT_TIER4_AI_PER_HR}
+
+      MAX_CONCURRENT_AI_REQUESTS: ${MAX_CONCURRENT_AI_REQUESTS}
+
+      MAX_LOGO_SIZE: ${MAX_LOGO_SIZE}
+      MAX_OCR_SIZE: ${MAX_OCR_SIZE}
+      MAX_CSV_SIZE: ${MAX_CSV_SIZE}
+      MAX_CSV_ROWS: ${MAX_CSV_ROWS}
+      MAX_CSV_COLS: ${MAX_CSV_COLS}
+      MAX_PDF_PAGES: ${MAX_PDF_PAGES}
+
+      DAILY_LOGO_UPLOADS_PER_COMPANY: ${DAILY_LOGO_UPLOADS_PER_COMPANY}
+      DAILY_CSV_IMPORTS_PER_COMPANY: ${DAILY_CSV_IMPORTS_PER_COMPANY}
+      DAILY_OCR_UPLOADS_PER_COMPANY: ${DAILY_OCR_UPLOADS_PER_COMPANY}
+      DAILY_AI_REQUESTS_PER_COMPANY: ${DAILY_AI_REQUESTS_PER_COMPANY}
+
+      MAX_AI_PROMPT_LENGTH: ${MAX_AI_PROMPT_LENGTH}
+      AI_MAX_CONTEXT_LENGTH: ${AI_MAX_CONTEXT_LENGTH}
+      AI_MAX_RESPONSE_SIZE: ${AI_MAX_RESPONSE_SIZE}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS}
+      AI_ENABLE_PROMPT_INJECTION_DETECTION: ${AI_ENABLE_PROMPT_INJECTION_DETECTION}
+      AI_ENABLE_OUTPUT_VALIDATION: ${AI_ENABLE_OUTPUT_VALIDATION}
+      AI_LOG_VERBOSE: ${AI_LOG_VERBOSE}
+      AI_LOG_PROMPTS_ENABLED: ${AI_LOG_PROMPTS_ENABLED}
+
+      SUBSCRIPTION_RENEWAL_MAX_ATTEMPTS: ${SUBSCRIPTION_RENEWAL_MAX_ATTEMPTS}
+      SUBSCRIPTION_RENEWAL_GRACE_PERIOD_DAYS: ${SUBSCRIPTION_RENEWAL_GRACE_PERIOD_DAYS}
+      SUBSCRIPTION_RENEWAL_BATCH_SIZE: ${SUBSCRIPTION_RENEWAL_BATCH_SIZE}
+
+
+  # ============================================================
+  # FastAPI Backend
+  # ============================================================
+  backend:
+    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    restart: always
+
+    volumes:
+      - /mnt/storage/hitungbiz-company-photos:/app/backend/uploads
+
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+
+      prestart:
+        condition: service_completed_successfully
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_SERVER: db
+
+      PROJECT_NAME: ${PROJECT_NAME}
+      STACK_NAME: ${STACK_NAME}
+      APPLICATION_NAME: ${APPLICATION_NAME}
+      DOMAIN: ${DOMAIN}
+      FRONTEND_HOST: ${FRONTEND_HOST}
+      ENVIRONMENT: ${ENVIRONMENT}
+
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS}
+
+      SECRET_KEY: ${SECRET_KEY?Variable not set}
+      FIRST_SUPERUSER: ${FIRST_SUPERUSER?Variable not set}
+      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD?Variable not set}
+
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+      SMTP_TLS: ${SMTP_TLS}
+      SMTP_SSL: ${SMTP_SSL}
+      SMTP_PORT: ${SMTP_PORT}
+
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+
+      SENTRY_DSN: ${SENTRY_DSN}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
+
+      CHIP_API_URL: ${CHIP_API_URL}
+      CHIP_SECRET_KEY: ${CHIP_SECRET_KEY}
+      CHIP_BRAND_ID: ${CHIP_BRAND_ID}
+      CHIP_WEBHOOK_URL: ${CHIP_WEBHOOK_URL}
+      CHIP_WEBHOOK_PUBLIC_KEY: ${CHIP_WEBHOOK_PUBLIC_KEY}
+
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+
+      SECURITY_HEADERS_ENABLED: ${SECURITY_HEADERS_ENABLED}
+      SECURE_HSTS_ENABLED: ${SECURE_HSTS_ENABLED}
+      SECURE_HSTS_SECONDS: ${SECURE_HSTS_SECONDS}
+      SECURE_HSTS_INCLUDE_SUBDOMAINS: ${SECURE_HSTS_INCLUDE_SUBDOMAINS}
+      SECURE_HSTS_PRELOAD: ${SECURE_HSTS_PRELOAD}
+
+      MAX_REQUEST_BODY_SIZE: ${MAX_REQUEST_BODY_SIZE}
+      REMOVE_SERVER_HEADER: ${REMOVE_SERVER_HEADER}
+      CSP_HEADER_OVERRIDE: ${CSP_HEADER_OVERRIDE}
+      X_FRAME_OPTIONS: ${X_FRAME_OPTIONS}
+      X_CONTENT_TYPE_OPTIONS: ${X_CONTENT_TYPE_OPTIONS}
+      REFERRER_POLICY: ${REFERRER_POLICY}
+      PERMISSIONS_POLICY: ${PERMISSIONS_POLICY}
+      CROSS_ORIGIN_OPENER_POLICY: ${CROSS_ORIGIN_OPENER_POLICY}
+      CROSS_ORIGIN_RESOURCE_POLICY: ${CROSS_ORIGIN_RESOURCE_POLICY}
+
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED}
+      RATE_LIMIT_TIER1_IP_PER_MIN: ${RATE_LIMIT_TIER1_IP_PER_MIN}
+      RATE_LIMIT_TIER2_USER_PER_MIN: ${RATE_LIMIT_TIER2_USER_PER_MIN}
+      RATE_LIMIT_TIER3_UPLOAD_PER_HR: ${RATE_LIMIT_TIER3_UPLOAD_PER_HR}
+      RATE_LIMIT_TIER4_AI_PER_HR: ${RATE_LIMIT_TIER4_AI_PER_HR}
+
+      MAX_CONCURRENT_AI_REQUESTS: ${MAX_CONCURRENT_AI_REQUESTS}
+
+      MAX_LOGO_SIZE: ${MAX_LOGO_SIZE}
+      MAX_OCR_SIZE: ${MAX_OCR_SIZE}
+      MAX_CSV_SIZE: ${MAX_CSV_SIZE}
+      MAX_CSV_ROWS: ${MAX_CSV_ROWS}
+      MAX_CSV_COLS: ${MAX_CSV_COLS}
+      MAX_PDF_PAGES: ${MAX_PDF_PAGES}
+
+      DAILY_LOGO_UPLOADS_PER_COMPANY: ${DAILY_LOGO_UPLOADS_PER_COMPANY}
+      DAILY_CSV_IMPORTS_PER_COMPANY: ${DAILY_CSV_IMPORTS_PER_COMPANY}
+      DAILY_OCR_UPLOADS_PER_COMPANY: ${DAILY_OCR_UPLOADS_PER_COMPANY}
+      DAILY_AI_REQUESTS_PER_COMPANY: ${DAILY_AI_REQUESTS_PER_COMPANY}
+
+      MAX_AI_PROMPT_LENGTH: ${MAX_AI_PROMPT_LENGTH}
+      AI_MAX_CONTEXT_LENGTH: ${AI_MAX_CONTEXT_LENGTH}
+      AI_MAX_RESPONSE_SIZE: ${AI_MAX_RESPONSE_SIZE}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS}
+      AI_ENABLE_PROMPT_INJECTION_DETECTION: ${AI_ENABLE_PROMPT_INJECTION_DETECTION}
+      AI_ENABLE_OUTPUT_VALIDATION: ${AI_ENABLE_OUTPUT_VALIDATION}
+      AI_LOG_VERBOSE: ${AI_LOG_VERBOSE}
+      AI_LOG_PROMPTS_ENABLED: ${AI_LOG_PROMPTS_ENABLED}
+
+      SUBSCRIPTION_RENEWAL_MAX_ATTEMPTS: ${SUBSCRIPTION_RENEWAL_MAX_ATTEMPTS}
+      SUBSCRIPTION_RENEWAL_GRACE_PERIOD_DAYS: ${SUBSCRIPTION_RENEWAL_GRACE_PERIOD_DAYS}
+      SUBSCRIPTION_RENEWAL_BATCH_SIZE: ${SUBSCRIPTION_RENEWAL_BATCH_SIZE}
+
+    ports:
+      - "127.0.0.1:8000:8000"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+
+
+  # ============================================================
+  # React Frontend
+  # ============================================================
+  frontend:
+    image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
+    restart: always
+
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+      args:
+        VITE_API_URL: https://api.hitungbiz.com.my
+        VITE_APP_NAME: ${APPLICATION_NAME}
+        NODE_ENV: production
+
+    ports:
+      - "127.0.0.1:5173:80"
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+
+# ==============================================================
+# Volumes
+# ==============================================================
+volumes:
+  app-db-data:
