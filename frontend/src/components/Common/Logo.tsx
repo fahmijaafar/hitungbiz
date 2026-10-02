@@ -30,7 +30,7 @@ export function Logo({
           src={fullLogo}
           alt="FastAPI"
           className={cn(
-            "h-6 w-auto group-data-[collapsible=icon]:hidden",
+            "h-10 w-auto group-data-[collapsible=icon]:hidden",
             className,
           )}
         />
@@ -38,7 +38,7 @@ export function Logo({
           src={iconLogo}
           alt="FastAPI"
           className={cn(
-            "size-5 hidden group-data-[collapsible=icon]:block",
+            "size-6 hidden group-data-[collapsible=icon]:block",
             className,
           )}
         />
